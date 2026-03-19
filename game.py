@@ -3,11 +3,47 @@ import random
 
 # --- 🧠 PERSISTENCE LAYER ---
 if 'points' not in st.session_state:
-    st.session_state.points = 10  # Starting capital
+    st.session_state.points = 10
 if 'streak' not in st.session_state:
     st.session_state.streak = 0
 
-# --- 🎭 TEACHER NARRATIVE ENGINE ---
+# --- 🎭 EXCUSE GENERATOR ---
+def generate_excuse(teacher, risk):
+    openings = [
+        "I regret to inform you",
+        "With deepest apologies",
+        "Please understand",
+        "I must explain that"
+    ]
+
+    if risk == 1:
+        events = [
+            "a minor issue with my laptop",
+            "a brief internet outage",
+            "a small but devastating scheduling error"
+        ]
+    elif risk == 2:
+        events = [
+            "an aggressive flock of geometry-hating pigeons",
+            "a rogue AI in my calculator",
+            "a highly suspicious power fluctuation"
+        ]
+    else:
+        events = [
+            "a rift in the space-time continuum",
+            "a sentient toaster uprising",
+            "an interdimensional goose invasion"
+        ]
+
+    details = [
+        "that specifically targeted my homework",
+        "at the exact moment I tried to submit it",
+        "in a way I cannot fully explain"
+    ]
+
+    return f"Dear {teacher}, {random.choice(openings)}, my homework was lost due to {random.choice(events)} {random.choice(details)}."
+
+# --- 🎭 TEACHER REACTIONS ---
 def get_reaction(result, teacher):
     lines = {
         "CRITICAL": [
@@ -25,60 +61,75 @@ def get_reaction(result, teacher):
     }
     return random.choice(lines[result])
 
-# --- 🖥️ UI FRONTEND ---
+# --- 🖥️ UI SETUP ---
 st.set_page_config(page_title="Academic RNG", page_icon="📝")
+
 st.title("🛡️ Academic RNG: The Excuse Engine")
 st.caption("A completely serious academic tool. Definitely. (v1.0)")
 
-# Sidebar Stats & Shop
+# --- SIDEBAR ---
 st.sidebar.header("🕹️ Player Stats")
 st.sidebar.metric("Current Streak", st.session_state.streak)
 st.sidebar.metric("Bribe Points", st.session_state.points)
 
 st.sidebar.divider()
 st.sidebar.subheader("💰 The Black Market")
+
 bribe_amount = st.sidebar.slider(
-    "Spend points for +% Success?", 0, st.session_state.points, 0
+    "Spend points for +% Success?", 
+    0, 
+    st.session_state.points, 
+    0
 )
 
-# Main Inputs
+# --- MAIN INPUTS ---
 teacher = st.text_input("Target Teacher Name", "Prof. Higgins")
+
 risk = st.select_slider(
-    "Select Risk Level", 
-    options=[1, 2, 3], 
+    "Select Risk Level",
+    options=[1, 2, 3],
     value=1,
-    help="1: Safe, 2: Risky, 3: Career-Ending"
+    format_func=lambda x: ["Safe", "Risky", "Career-Ending"][x-1]
 )
 
-# --- 🚀 DEPLOY EXCUSE LOGIC ---
+# --- 🚀 MAIN BUTTON ---
 if st.button("🚀 DEPLOY STRATEGY"):
+
+    # Generate excuse first
+    excuse_text = generate_excuse(teacher, risk)
+
+    st.write("📄 **Generated Excuse:**")
+    st.code(excuse_text)
+
     # Probability logic
     base_chance = (70 / risk) + (bribe_amount * 3)
     st.session_state.points -= bribe_amount
-    
+
     roll = random.random() * 100
-    
-    # Outcome determination
-    if roll < 7:  # Critical Success
-        res = "CRITICAL"
+
+    # Outcome logic
+    if roll < 7:
+        result = "CRITICAL"
         st.session_state.streak += 2
         st.session_state.points += (20 * risk)
         st.balloons()
-    elif roll < base_chance:  # Normal Success
-        res = "SUCCESS"
+
+    elif roll < base_chance:
+        result = "SUCCESS"
         st.session_state.streak += 1
         st.session_state.points += (5 * risk)
-    else:  # Fail
-        res = "FAIL"
+
+    else:
+        result = "FAIL"
         if st.session_state.streak > 0:
             st.warning(f"💔 STREAK BROKEN! You reached {st.session_state.streak}.")
         st.session_state.streak = 0
-    
-    # Teacher reaction
-    st.divider()
-    st.info(get_reaction(res, teacher))
 
-# Optional: Theme / styling
+    # --- OUTPUT ---
+    st.divider()
+    st.info(get_reaction(result, teacher))
+
+# --- OPTIONAL STYLING ---
 st.markdown(
     """
     <style>
